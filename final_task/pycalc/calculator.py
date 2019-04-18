@@ -3,14 +3,16 @@
 # import Tokens from pycalc.scaner
 
 
-def advance(literal=None):
+def advance(token_class=None):
     global token
-    if literal and isinstance(token, RightParen):
-        raise SyntaxError("Expected %r" % literal)
+    # print(token, token_class)
+    if token_class and not isinstance(token, token_class):
+        raise Exception("Syntax error. Expected: " + token_class.__name__)
     token = next()
+    return
 
 
-class Symbol():
+class Symbol(object):
     lbp = 0
 
     def prefix(self):
@@ -18,6 +20,9 @@ class Symbol():
 
     def infix(self):
         raise NotImplementedError()
+
+    def __str__(self):
+        return self.__class__.__name__
 
 
 class Literal(Symbol):
@@ -71,7 +76,7 @@ class LeftParen(Symbol):
     def prefix(self):
         expr = expression(100)
         print(expr)
-        advance(')')
+        advance(RightParen)
         return expr
 
     # def infix(self, left):
@@ -85,13 +90,42 @@ class RightParen(Symbol):
         return left ** expression(80 - 1)
 
 
+class Function(Symbol):
+    lbp = 170
+
+    def prefix(self):
+        advance(LeftParen)
+        print('in fn:', token)
+        args = []
+        if not isinstance(token, RightParen):
+            while True:
+                args.append(expression(0))
+                if not isinstance(token, Comma):
+                    break
+                advance(Comma)
+        print('arguments:', args)
+
+        advance(RightParen)
+        return sum(args)
+
+
+class Comma(Symbol):
+    lbp = 0
+
+    def prefix(self):
+        expr = expression(self.lbp)
+        return expr
+
+
 class End(Symbol):
     lbp = 0
 
 
 def tokenize(program):
-    for literal in program.split(' '):
-        # print literal
+    tokens = program.split()
+    print(tokens)
+    for literal in tokens:
+        print('literal:',  literal)
         if literal.isdigit():
             yield Literal(literal)
         elif literal == "+":
@@ -106,6 +140,10 @@ def tokenize(program):
             yield LeftParen()
         elif literal == ")":
             yield RightParen()
+        elif literal == "fn":
+            yield Function()
+        elif literal == ",":
+            yield Comma()
         else:
             raise SyntaxError('unknown operator: %s', literal)
     yield End()
@@ -125,10 +163,13 @@ def expression(rbp=0):
 
 
 def parse(program):
+    # try:
     global token, next
     next = tokenize(program).next
     token = next()
     return expression()
+    # except Exception as e:
+    # print(e)
 
 
 def run(expression):
@@ -139,6 +180,6 @@ def run(expression):
 
 
 if __name__ == "__main__":
-    program = '( 10 + 20 )'
-    print(eval(program))
+    program = 'fn ( )'
+    # print(eval(program))
     print(parse(program))
