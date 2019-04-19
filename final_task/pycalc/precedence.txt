@@ -1,0 +1,44 @@
+Operator                Description                                 Left binding power
+---------------------------------------------------------------------------------------------------
+
+lambda	                Lambda expression                            10
+
+if – else	            Conditional expression                       20
+
+or	                    Boolean OR                                   30
+
+and	                    Boolean AND                                  40
+
+not x	                Boolean NOT                                  50
+
+in, not in, is, is not, Comparisons, including membership            60
+<, <=, >, >=, !=, ==	tests and identity tests
+
+^	                    Bitwise XOR                                  70
+
+|	                    Bitwise OR                                   80
+
+&	                    Bitwise AND                                  90
+
+<<, >>	                Shifts                                      100
+
++, -	                Addition and subtraction                    110
+
+*, @, /, //, %	        Multiplication, matrix multiplication,      120
+                    division, floor division, remainder
+
++x, -x, ~x	            Positive, negative, bitwise NOT             130
+
+**	                    Exponentiation                              140
+
+await x	                Await expression                            150
+
+x[index],               Subscription, slicing,                      160
+x[index:index],         call, attribute reference
+x(arguments...),
+x.attribute
+
+(expressions...),       Binding or tuple display, list display,     170
+[expressions...],       dictionary display, set display
+{key: value...},
+{expressions...}
