@@ -24,8 +24,11 @@ class Symbol(object):
     def __str__(self):
         return self.__class__.__name__
 
+    def __repr__(self):
+        return self.__class__.__name__
 
-class Literal(Symbol):
+
+class Number(Symbol):
     def __init__(self, value):
         self.value = int(value)
 
@@ -34,64 +37,69 @@ class Literal(Symbol):
 
 
 class Add(Symbol):
-    lbp = 10
+    lbp = 110
 
     def prefix(self):
-        return expression(100)
+        right = expression(130)
+        return right
 
     def infix(self, left):
-        right = expression(10)
+        right = expression(self.lbp)
         return left + right
 
 
 class Sub(Symbol):
-    lbp = 10
+    lbp = 110
 
     def prefix(self):
-        right = expression(100)
+        right = expression(130)
         return -right
 
     def infix(self, left):
-        right = expression(10)
+        right = expression(self.lbp)
         return left - right
 
 
 class Mul(Symbol):
-    lbp = 20
+    lbp = 120
 
     def infix(self, left):
         return left * expression(self.lbp)
 
 
 class Pow(Symbol):
-    lbp = 80
+    lbp = 140
 
     def infix(self, left):
-        return left ** expression(80 - 1)
+        return left ** expression(self.lbp - 1)
 
 
 class LeftParen(Symbol):
-    lbp = 150
+    lbp = 170
 
     def prefix(self):
-        expr = expression(100)
-        print(expr)
+        expr = expression()
+        print('left parent prefix, expr from right:', expr)
+        print(token)
         advance(RightParen)
         return expr
 
     # def infix(self, left):
-    #     return left ** expression(80 - 1)
+    #     return left ** expression(self.lbp)
 
 
 class RightParen(Symbol):
-    lbp = 0
+    # lbp = 0
+
+    # def prefix(self):
+    #     raise Exception('expression cant start with )')
 
     def infix(self, left):
-        return left ** expression(80 - 1)
+        return expression(self.lbp)
 
 
 class Function(Symbol):
-    lbp = 170
+    lbp = 160
 
     def prefix(self):
         advance(LeftParen)
@@ -110,7 +118,7 @@ class Function(Symbol):
 
 
 class Comma(Symbol):
-    lbp = 0
+    # lbp = 0
 
     def prefix(self):
         expr = expression(self.lbp)
@@ -118,7 +126,8 @@ class Comma(Symbol):
 
 
 class End(Symbol):
-    lbp = 0
+    # lbp = 0
+    pass
 
 
 def tokenize(program):
@@ -127,7 +136,7 @@ def tokenize(program):
     for literal in tokens:
         print('literal:',  literal)
         if literal.isdigit():
-            yield Literal(literal)
+            yield Number(literal)
         elif literal == "+":
             yield Add()
         elif literal == "-":
@@ -154,9 +163,13 @@ def expression(rbp=0):
     t = token
     token = next()
     left = t.prefix()
+    print('in expression start:', t, token, left)
     while rbp < token.lbp:
         t = token
         token = next()
+        print('t    :', t)
+        print('token:', token)
+        print('rbp  :', rbp)
         left = t.infix(left)
 
     return left
@@ -180,6 +193,6 @@ def run(expression):
 
 
 if __name__ == "__main__":
-    program = 'fn ( )'
-    # print(eval(program))
+    program = '( 4 ** 3 ) ** 2'
+    print(eval(program))
     print(parse(program))
