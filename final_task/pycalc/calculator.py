@@ -3,30 +3,32 @@
 # import Tokens from pycalc.scaner
 
 
-# def advance(token_class=None):
-#     global token
-#     if token_class and not token.is_instance(token_class):
-#         raise Exception("Syntax error. Expected: " + token_class.__name__)
-#     token = next()
-#     return
-
-
-class Symbol(object):
+class Symbol():
     lbp = 0
 
     def __init__(self, parser):
-        self.parser = parser
+        self._parser = parser
 
     def prefix(self):
-        raise NotImplementedError()
+        raise SyntaxError(f'{self.parser.token} can’t start an expression')
 
     def infix(self):
-        raise NotImplementedError()
+        raise SyntaxError()
 
     def expression(self, *args):
-        return self.parser.expression(*args)
+        """Envoke the expression method of a parser."""
+        return self._parser.expression(*args)
+
+    def advance(self, *args, **kwargs):
+        """Envoke the advance method of a parser."""
+        self._parser.advance(*args, **kwargs)
+
+    def is_next_token(self, token_class):
+        """Return `True` if the next token is instance `token_class` class."""
+        return self._parser.next_token.is_instance(token_class)
 
     def is_instance(self, token_class):
+        """Return `True` if this token is instance of `token_class`."""
         return isinstance(self, token_class)
 
     def __repr__(self):
@@ -92,7 +94,7 @@ class LeftParen(Symbol):
 
     def prefix(self):
         expr = self.expression()
-        self.parser.advance(RightParen)
+        self.advance(RightParen)
         return expr
 
 
@@ -106,18 +108,18 @@ class Function(Symbol):
     lbp = 160
 
     def prefix(self):
-        self.parser.advance(LeftParen)
-        print('in fn:', self.parser.token)
+        self.advance(LeftParen)
+
         args = []
-        if not self.parser.next_token.is_instance(RightParen):
+        if not self.is_next_token(RightParen):
             while True:
                 args.append(self.expression())
-                if not self.parser.next_token.is_instance(Comma):
+                if not self.is_next_token(Comma):
                     break
-                self.parser.advance(Comma)
+                self.advance(Comma)
         print('arguments:', args)
 
-        self.parser.advance(RightParen)
+        self.advance(RightParen)
         return sum(args)
 
 
@@ -149,7 +151,7 @@ class Parser:
 
     def advance(self, token_class=None):
         if token_class and not self.next_token.is_instance(token_class):
-            raise Exception("Syntax error. Expected: " + token_class.__name__)
+            raise SyntaxError(f"Expected: {token_class.__name__}")
         self.next_token = next(self.tokens)
 
     def expression(self, rbp=0):
@@ -203,7 +205,8 @@ def run(expression):
 
 
 if __name__ == "__main__":
-    program = 'fn ( 1 , 2 , 4 )'
+    program = '- - - 2 ** fn ( 1 , 2 , 4 )'
     # print(eval(program))
+    print(program)
     p = Parser(program)
     print(p.parse())
