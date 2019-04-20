@@ -5,8 +5,7 @@
 
 def advance(token_class=None):
     global token
-    # print(token, token_class)
-    if token_class and not isinstance(token, token_class):
+    if token_class and not token.is_instance(token_class):
         raise Exception("Syntax error. Expected: " + token_class.__name__)
     token = next()
     return
@@ -21,8 +20,8 @@ class Symbol(object):
     def infix(self):
         raise NotImplementedError()
 
-    def __str__(self):
-        return self.__class__.__name__
+    def is_instance(self, token_class):
+        return isinstance(self, token_class)
 
     def __repr__(self):
         return self.__class__.__name__
@@ -74,25 +73,23 @@ class Pow(Symbol):
         return left ** expression(self.lbp - 1)
 
 
+class Eq(Symbol):
+    lbp = 60
+
+    def infix(self, left):
+        return left == expression(self.lbp)
+
+
 class LeftParen(Symbol):
     lbp = 170
 
     def prefix(self):
         expr = expression()
-        print('left parent prefix, expr from right:', expr)
-        print(token)
         advance(RightParen)
         return expr
 
-    # def infix(self, left):
-    #     return left ** expression(self.lbp)
-
 
 class RightParen(Symbol):
-    # lbp = 0
-
-    # def prefix(self):
-    #     raise Exception('expression cant start with )')
 
     def infix(self, left):
         return expression(self.lbp)
@@ -105,7 +102,7 @@ class Function(Symbol):
         advance(LeftParen)
         print('in fn:', token)
         args = []
-        if not isinstance(token, RightParen):
+        if not token.is_instance(RightParen):
             while True:
                 args.append(expression(0))
                 if not isinstance(token, Comma):
@@ -118,15 +115,12 @@ class Function(Symbol):
 
 
 class Comma(Symbol):
-    # lbp = 0
-
     def prefix(self):
         expr = expression(self.lbp)
         return expr
 
 
 class End(Symbol):
-    # lbp = 0
     pass
 
 
@@ -153,6 +147,8 @@ def tokenize(program):
             yield Function()
         elif literal == ",":
             yield Comma()
+        elif literal == "==":
+            yield Eq()
         else:
             raise SyntaxError('unknown operator: %s', literal)
     yield End()
@@ -193,6 +189,6 @@ def run(expression):
 
 
 if __name__ == "__main__":
-    program = '( 4 ** 3 ) ** 2'
-    print(eval(program))
+    program = '1 == 1'
+    # print(eval(program))
     print(parse(program))
