@@ -23,8 +23,8 @@ class Symbol():
         """Envoke the advance method of a parser."""
         self._parser.advance(*args, **kwargs)
 
-    def is_next_token(self, token_class):
-        """Return `True` if the next token is instance `token_class` class."""
+    def is_instance_next_token(self, token_class):
+        """Return `True` if the next token is instance of `token_class` class."""
         return self._parser.next_token.is_instance(token_class)
 
     def is_instance(self, token_class):
@@ -107,19 +107,25 @@ class RightParen(Symbol):
 class Function(Symbol):
     lbp = 160
 
+    def __init__(self, parser, fn=None):
+        super().__init__(parser)
+        self.fn = fn
+
     def prefix(self):
         self.advance(LeftParen)
 
         args = []
-        if not self.is_next_token(RightParen):
+        if not self.is_instance_next_token(RightParen):
             while True:
                 args.append(self.expression())
-                if not self.is_next_token(Comma):
+                if not self.is_instance_next_token(Comma):
                     break
                 self.advance(Comma)
         print('arguments:', args)
 
         self.advance(RightParen)
+        if self.fn:
+            return self.fn(args)
         return sum(args)
 
 
@@ -134,14 +140,18 @@ class End(Symbol):
 
 
 class Parser:
-    def __init__(self, source):
-        self.source = source
-        self.tokens = tokenize(source, self)
+    def __init__(self):
+        self.source = None
 
         self.token = None
         self.next_token = None
 
-    def parse(self):
+    def parse(self, source):
+        if not source:
+            raise Exception('can’t parse nothing')
+        self.source = source
+        self.tokens = tokenize(source, self)
+
         self.next()
         return self.expression()
 
@@ -205,8 +215,14 @@ def run(expression):
 
 
 if __name__ == "__main__":
-    program = '- - - 2 ** fn ( 1 , 2 , 4 )'
+    # program = '- - - 2 ** fn ( 1 , ( 2 + 1 ) * 5 , 4 )'
     # print(eval(program))
-    print(program)
-    p = Parser(program)
-    print(p.parse())
+    # print(program)
+    p = Parser()
+    assert p.parse('- - - 2 ** fn ( 1 , ( 2 + 1 ) * 5 , 4 )') == -1048576
+    assert p.parse('- - 2') == 2
+    assert p.parse('4 ** 3 ** 2') == 262144
+    assert p.parse('1 + 2 * 3') == 7
+    assert p.parse('( 1 + 2 ) * 3') == 9
+    assert p.parse('1 + 2 == 3') is True
+    assert p.parse('0 == 1') is False
