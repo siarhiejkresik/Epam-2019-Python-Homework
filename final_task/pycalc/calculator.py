@@ -226,3 +226,5 @@ if __name__ == "__main__":
     assert p.parse('( 1 + 2 ) * 3') == 9
     assert p.parse('1 + 2 == 3') is True
     assert p.parse('0 == 1') is False
+    # TODO:
+    # assert p.parse('0 1') is False
