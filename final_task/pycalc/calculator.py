@@ -219,6 +219,8 @@ if __name__ == "__main__":
     # print(eval(program))
     # print(program)
     p = Parser()
+    assert p.parse('2') == 2
+    assert p.parse('- 2') == - 2
     assert p.parse('- - - 2 ** fn ( 1 , ( 2 + 1 ) * 5 , 4 )') == -1048576
     assert p.parse('- - 2') == 2
     assert p.parse('4 ** 3 ** 2') == 262144
@@ -226,5 +228,6 @@ if __name__ == "__main__":
     assert p.parse('( 1 + 2 ) * 3') == 9
     assert p.parse('1 + 2 == 3') is True
     assert p.parse('0 == 1') is False
+    print(p.parse('1 2'))
     # TODO:
     # assert p.parse('0 1') is False
