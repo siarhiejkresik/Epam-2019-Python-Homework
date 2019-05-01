@@ -10,7 +10,7 @@ class Symbol():
         self._parser = parser
 
     def prefix(self):
-        raise SyntaxError(f'{self.parser.token} can’t start an expression')
+        raise SyntaxError(f'{self._parser.token} can’t start an expression')
 
     def infix(self):
         raise SyntaxError()
@@ -23,13 +23,13 @@ class Symbol():
         """Envoke the advance method of a parser."""
         self._parser.advance(*args, **kwargs)
 
-    def is_instance_next_token(self, token_class):
-        """Return `True` if the next token is instance of `token_class` class."""
-        return self._parser.next_token.is_instance(token_class)
+    # def is_instance_next_token(self, token_class):
+    #     """Return `True` if the next token is instance of `token_class` class."""
+    #     return self._parser.next_token.is_instance(token_class)
 
-    def is_instance(self, token_class):
+    def is_at(self, token_class):
         """Return `True` if this token is instance of `token_class`."""
-        return isinstance(self, token_class)
+        return isinstance(self._parser.token, token_class)
 
     def __repr__(self):
         return self.__class__.__name__
@@ -115,17 +115,19 @@ class Function(Symbol):
         self.advance(LeftParen)
 
         args = []
-        if not self.is_instance_next_token(RightParen):
+        if not self.is_at(RightParen):
+
             while True:
                 args.append(self.expression())
-                if not self.is_instance_next_token(Comma):
+                if not self.is_at(Comma):
                     break
                 self.advance(Comma)
-        print('arguments:', args)
 
         self.advance(RightParen)
+
         if self.fn:
             return self.fn(args)
+
         return sum(args)
 
 
@@ -144,7 +146,7 @@ class Parser:
         self.source = None
 
         self.token = None
-        self.next_token = None
+        # self.next_token = None
 
     def parse(self, source):
         if not source:
@@ -162,24 +164,29 @@ class Parser:
         return result
 
     def next(self):
-        self.token = self.next_token
-        self.next_token = next(self.tokens)
+        self.token = next(self.tokens)
 
     def advance(self, token_class=None):
-        if token_class and not self.next_token.is_instance(token_class):
+        if token_class and not self.token.is_at(token_class):
             raise SyntaxError(f"Expected: {token_class.__name__}")
-        self.next_token = next(self.tokens)
+        self.next()
+        print('token after advance:', self.token, token_class)
+        # self.next_token = next(self.tokens)
 
     def expression(self, rbp=0):
+
+        tok = self.token
         self.next()
-        left = self.token.prefix()
-        print('in expression start:', self.token, self.next_token, left)
-        while rbp < self.next_token.lbp:
+
+        left = tok.prefix()
+        print('in expression start:', tok, self.token, left)
+        while rbp < self.token.lbp:
+            tok = self.token
             self.next()
             # print('t    :', t)
             # print('token:', token)
             # print('rbp  :', rbp)
-            left = self.token.infix(left)
+            left = tok.infix(left)
 
         return left
 
@@ -187,7 +194,7 @@ class Parser:
 def tokenize(source, parser):
     tokens = source.split()
     for literal in tokens:
-        print('literal:',  literal)
+        # print('literal:',  literal)
         if literal.isdigit():
             yield Number(parser, literal)
         elif literal == "+":
