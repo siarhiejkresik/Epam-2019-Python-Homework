@@ -153,7 +153,13 @@ class Parser:
         self.tokens = tokenize(source, self)
 
         self.next()
-        return self.expression()
+
+        print('=' * 20)
+        print(f'input:  {self.source}')
+        result = self.expression()
+        print(f'output: {result}')
+
+        return result
 
     def next(self):
         self.token = self.next_token
